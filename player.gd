@@ -1,5 +1,9 @@
 extends KinematicBody2D
 
+# --- SIGNALS ---
+signal health_changed(current)
+signal stamina_changed(current)
+
 # --- EXPORT VARIABLES ---
 export var attack_max_speed = 50
 export var attack_cooldown_time = 0.2
@@ -17,6 +21,14 @@ onready var basic_attack_shape = $BasicAttackArea/CollisionShape2D
 onready var health_regen_timer = $HealthRegenTimer
 
 # --- VARIABLES ---
+var max_health2 = 100.0
+var health2 = 100.0
+var max_stamina2 = 100.0
+var stamina2 = 100.0
+var max_stamin = 100 # not stamina cuz max_stamina already is a variable
+var current_stamina = 100
+var max_hp = 100
+var current_hp = 100
 var health = 100
 var max_health = 100
 var health_regen = 1.0
@@ -61,11 +73,13 @@ func _physics_process(delta):
 	if stamina_regen_timer.is_stopped() and stamina < max_stamina and not is_rolling:
 		stamina += stamina_regen * delta
 		stamina = clamp(stamina, 0, max_stamina)
+		emit_signal("stamina_changed", stamina)
 		
 	# 2.5 HEALTH REGEN
 	if health_regen_timer.is_stopped() and health < max_health:
 		health += health_regen * delta
 		health = clamp(health, 0, max_health)
+		emit_signal("health_changed", health)
 	
 	
 	# 3. MOVEMENT & INPUT GATE
@@ -137,6 +151,8 @@ func start_roll():
 	if stamina >= 25:
 		hit_during_this_dash = [] # Clear the list so we can hit enemies again
 		stamina -= 25
+		emit_signal("stamina_changed", stamina)
+		ui.update_ui(health, stamina) # Using your existing UI variable
 		stamina_regen_timer.start(REGEN_DELAY)
 		is_rolling = true
 		
@@ -216,6 +232,8 @@ func take_damage(amount):
 		return 
 
 	health -= amount
+	emit_signal("health_changed", health)
+	ui.update_ui(health, stamina) # Using your existing UI variable
 	print("Player health: ", health)
 	
 	if health >= 0:

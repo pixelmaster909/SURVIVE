@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=31 format=2]
 
 [ext_resource path="res://player.tscn" type="PackedScene" id=1]
 [ext_resource path="res://world.tres" type="TileSet" id=2]
@@ -12,9 +12,14 @@
 [ext_resource path="res://assets/backgrounds/background 1/4.png" type="Texture" id=10]
 [ext_resource path="res://assets/backgrounds/background 1/2.png" type="Texture" id=11]
 [ext_resource path="res://icon.png" type="Texture" id=12]
+[ext_resource path="res://HealthUI.gd" type="Script" id=13]
+[ext_resource path="res://assets/Health&Stamina/Red/Border.png" type="Texture" id=14]
 [ext_resource path="res://assets/backgrounds/background 1/3.png" type="Texture" id=15]
 [ext_resource path="res://assets/backgrounds/background 1/6.png" type="Texture" id=16]
+[ext_resource path="res://assets/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/hearts.png" type="Texture" id=17]
 [ext_resource path="res://HUD.gd" type="Script" id=18]
+[ext_resource path="res://StaminaUI.gd" type="Script" id=19]
+[ext_resource path="res://assets/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/pixil-frame-0(2).png" type="Texture" id=20]
 
 [sub_resource type="Animation" id=1]
 resource_name = "GoToNight"
@@ -242,6 +247,30 @@ tracks/8/keys = {
 
 [sub_resource type="RectangleShape2D" id=3]
 
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0.721569, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=6]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+
+[sub_resource type="AtlasTexture" id=7]
+atlas = ExtResource( 17 )
+region = Rect2( 1, 2, 14, 13 )
+
+[sub_resource type="AtlasTexture" id=8]
+atlas = ExtResource( 14 )
+region = Rect2( 95, 20, 50, 9 )
+
+[sub_resource type="StyleBoxFlat" id=9]
+bg_color = Color( 1, 0.898039, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=10]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+
+[sub_resource type="AtlasTexture" id=11]
+atlas = ExtResource( 14 )
+region = Rect2( 95, 20, 50, 9 )
+
 [node name="Node2D" type="Node2D"]
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
@@ -359,14 +388,85 @@ texture = ExtResource( 12 )
 layer = 100
 script = ExtResource( 18 )
 
-[node name="Control" type="Control" parent="HUD"]
+[node name="HealthUI" type="Control" parent="HUD"]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 13 )
+
+[node name="TextureRect" type="TextureRect" parent="HUD/HealthUI"]
+margin_right = 40.0
+margin_bottom = 40.0
+expand = true
+
+[node name="ProgressBar" type="ProgressBar" parent="HUD/HealthUI/TextureRect"]
+margin_left = 27.0
+margin_top = 11.0
+margin_right = 116.0
+margin_bottom = 25.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 1 )
+custom_styles/fg = SubResource( 5 )
+custom_styles/bg = SubResource( 6 )
+step = 1.0
+
+[node name="TextureRect" type="TextureRect" parent="HUD/HealthUI/TextureRect/ProgressBar"]
+margin_left = -25.0
+margin_top = -4.0
+margin_right = -5.0
+margin_bottom = 16.0
+texture = SubResource( 7 )
+expand = true
+
+[node name="TextureRect2" type="TextureRect" parent="HUD/HealthUI/TextureRect/ProgressBar"]
+margin_top = -4.0
+margin_right = 91.0
+margin_bottom = 16.0
+texture = SubResource( 8 )
+expand = true
+
+[node name="Label" type="Label" parent="HUD/HealthUI/TextureRect"]
+visible = false
+margin_left = 2.0
+margin_top = 10.0
+margin_right = 42.0
+margin_bottom = 24.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "100%"
+
+[node name="StaminaUI" type="Control" parent="HUD"]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 19 )
+
+[node name="TextureRect" type="TextureRect" parent="HUD/StaminaUI"]
 margin_right = 40.0
 margin_bottom = 40.0
 
-[node name="HealthBar" type="ProgressBar" parent="HUD/Control"]
-margin_right = 4.0
-margin_bottom = 14.0
+[node name="ProgressBar" type="ProgressBar" parent="HUD/StaminaUI/TextureRect"]
+margin_left = 27.0
+margin_top = 33.0
+margin_right = 116.0
+margin_bottom = 47.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_styles/fg = SubResource( 9 )
+custom_styles/bg = SubResource( 10 )
+step = 1.0
 
-[node name="StaminaBar" type="ProgressBar" parent="HUD/Control"]
-margin_right = 4.0
+[node name="TextureRect" type="TextureRect" parent="HUD/StaminaUI/TextureRect/ProgressBar"]
+margin_left = -35.0
+margin_top = -10.0
+margin_right = 5.0
+margin_bottom = 30.0
+texture = ExtResource( 20 )
+expand = true
+
+[node name="TextureRect2" type="TextureRect" parent="HUD/StaminaUI/TextureRect/ProgressBar"]
+margin_top = -4.0
+margin_right = 91.0
+margin_bottom = 16.0
+texture = SubResource( 11 )
+expand = true
+
+[node name="Label" type="Label" parent="HUD/StaminaUI/TextureRect"]
+margin_right = 40.0
 margin_bottom = 14.0
