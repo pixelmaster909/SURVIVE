@@ -15,6 +15,12 @@ func _ready():
 func _on_SpawnTimer_timeout():
 	if player == null: return
 	
+	# Every 10 kills, spawn enemies 0.1 seconds faster
+	var kills = player.enemies_killed
+	spawn_timer.wait_time = max(0.5, 2.0 - (kills * 0.05))
+	# Inside your Spawner script _on_SpawnTimer_timeout:
+	spawn_timer.start(spawn_timer.wait_time + rand_range(-0.2, 0.2))
+	
 	# 1. Pick a random X position to the left or right
 	var spawn_x = player.global_position.x + (spawn_radius * (1 if randf() > 0.5 else -1))
 	

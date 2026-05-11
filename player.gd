@@ -39,6 +39,8 @@ var regen_timer = 0.0 # Idrk what this does but might as well keep it just in ca
 var extra_jumps = 1
 var velocity = Vector2.ZERO
 
+var enemies_killed = 0
+
 var is_rolling = false
 var is_blocking = false
 var is_dead = false
@@ -108,8 +110,8 @@ func _physics_process(delta):
 				extra_jumps -= 1
 				if jump_particles:
 					jump_particles.restart()
-				else:
-					 print("Not enough stamina to double jump!")
+				#else:
+					 #print("Not enough stamina to double jump!")
 
 		if Input.is_action_just_pressed("roll") and roll_timer.is_stopped():
 			if is_on_floor():
@@ -122,6 +124,9 @@ func _physics_process(delta):
 		# NEW: Added attack_cooldown_timer.is_stopped()
 		if Input.is_action_just_pressed("use") and is_on_floor() and not is_attacking and attack_cooldown_timer.is_stopped():
 			start_attack()
+		
+		if Input.is_action_just_pressed("rangeAttack") and not is_rolling:
+			shoot()
 		
 	# 4. BLOCKING LOGIC
 	if Input.is_action_pressed("block") and is_on_floor() and not is_rolling:
@@ -140,7 +145,7 @@ func _physics_process(delta):
 	velocity = move_and_slide(velocity, Vector2.UP)
 	
 	#print("Stamina: ", stepify(stamina, 0.1))
-	print("Health: ", stepify(health, 0.1))
+	#print("Health: ", stepify(health, 0.1))
 
 
 	
@@ -173,7 +178,6 @@ func start_roll():
 func update_animations():
 	# NEW: Stop updating animations if the player is currently attacking!
 	if is_attacking:
-		animated_sprite.play("attack")
 		return
 	#print("Current Stamina: ", stamina)
 	if not is_blocking: 
@@ -218,8 +222,8 @@ func _process(delta):
 	# Press 'J' to recover 10 health
 	if Input.is_key_pressed(KEY_J):
 		health += 10
-		health = clamp(health, 0, 100)
-		ui.update_ui(health, stamina)
+		#health = clamp(health, 0, 100)
+		#ui.update_ui(health, stamina)
 	
 # Inside Player.gd
 func take_damage(amount):
@@ -244,16 +248,18 @@ func take_damage(amount):
 		die()
 
 func die():
-	# Stop the player from moving or taking more damage
+	is_dead = true
 	set_physics_process(false) 
 	animated_sprite.play("death")
 	
-	# We wait for the signal 'animation_finished' before moving to the next line
 	yield(animated_sprite, "animation_finished")
-	
-	# NOW we reload
-	get_tree().reload_current_scene()
-	
+
+	# Find the Death Screen and show it
+	var death_ui = get_tree().root.find_node("DeathScreen", true, false)
+	if death_ui:
+		# We only pass the kills! The UI already knows the time.
+		death_ui.show_death_screen(enemies_killed)
+		
 func start_attack():
 	is_attacking = true
 	animated_sprite.play("attack")
@@ -267,7 +273,17 @@ func start_attack():
 	var bodies = basic_attack_area.get_overlapping_bodies()
 	for body in bodies:
 		if body.is_in_group("enemies") and body.has_method("take_damage"):
-			body.take_damage(15) 
+			body.take_damage(15)
+			
+			if body.health <= 0:
+				enemies_killed += 1
+		
+		if "knockback_velocity" in body:
+			# Apply the knockback force
+			var force = 300
+			# Calculate direction: (Goblin Position - Player Position)
+			var dir = (body.global_position - global_position).normalized()
+			body.knockback_velocity = dir * force
 
 	# Wait for the animation to finish
 	yield(get_tree().create_timer(0.35), "timeout")
@@ -294,3 +310,44 @@ func _on_SwordDashArea_body_entered(body):
 func _on_hit(damage):
 	health -= damage
 	ui.update_ui(health, stamina)
+
+# Make sure this variable name matches what you see in the Inspector
+export (PackedScene) var ArrowScene 
+
+func shoot():
+	if ArrowScene and not is_attacking:
+		is_attacking = true
+		velocity.x = 0 # Stop the player in place while shooting
+		
+		# 1. Play the animation
+		animated_sprite.play("range attack") # Change "attack" to your bow animation name
+		
+		# 2. Wait for the animation to reach the "release" point
+		# If your animation is 0.4 seconds long, we wait slightly less to fire
+		yield(get_tree().create_timer(0.6), "timeout") 
+		
+		# 3. Create the arrow
+		var arrow = ArrowScene.instance()
+		get_parent().add_child(arrow)
+
+		# ADJUST THESE NUMBERS:
+		# Vector2(X, Y) 
+		# X: Positive moves arrow forward, Negative moves it back.
+		# Y: Negative moves arrow UP, Positive moves it DOWN.
+		var spawn_offset = Vector2(0,0) 
+
+# If flipped, we need to flip the X offset too!
+		if animated_sprite.flip_h:
+			arrow.global_position = global_position + Vector2(-spawn_offset.x, spawn_offset.y)
+			arrow.direction = Vector2.LEFT
+			arrow.rotation_degrees = 180
+		else:
+			arrow.global_position = global_position + spawn_offset
+			arrow.direction = Vector2.RIGHT
+			arrow.rotation_degrees = 0
+			
+		# 4. Wait for the rest of the animation to finish
+		yield(animated_sprite, "animation_finished")
+		
+		is_attacking = false
+		attack_cooldown_timer.start(attack_cooldown_time)

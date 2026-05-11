@@ -10,9 +10,9 @@ config_version=4
 
 [application]
 
-config/name="SURVIVE"
+config/name="Survive The Orcs"
 run/main_scene="res://Node2D.tscn"
-boot_splash/image="res://assets/pixil-frame-0(4).png"
+boot_splash/image="res://assets/boot screen (sto).png"
 config/icon="res://icon.png"
 
 [display]
@@ -71,6 +71,7 @@ rangeAttack={
 2d_physics/layer_1="world"
 2d_physics/layer_2="enemy"
 2d_physics/layer_3="player"
+2d_physics/layer_4="arrow"
 
 [physics]
 

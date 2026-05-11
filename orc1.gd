@@ -10,6 +10,7 @@ var attack_animations = ["attack", "attack2"]
 var health = max_health
 var velocity = Vector2.ZERO
 var knockback = Vector2.ZERO # knockback velocity thing
+var knockback_velocity = Vector2.ZERO
 
 var is_attacking = false
 var is_dead = false
@@ -21,10 +22,21 @@ onready var wall_sensor = $FlipContainer/WallSensor
 onready var player = get_tree().get_nodes_in_group("player")[0] if get_tree().get_nodes_in_group("player").size() > 0 else null
 onready var axe_area = $FlipContainer/AxeAttackArea
 
+const DAMAGE_TEXT = preload("res://DamageIndicator.tscn")
+
 func _ready():
 	randomize() 
 
 func _physics_process(delta):
+	# --- APPLY KNOCKBACK ---
+	if knockback_velocity.length() > 10:
+		# Move the goblin based on the knockback
+		knockback_velocity = move_and_slide(knockback_velocity)
+		# Smoothly slow the knockback down (Friction)
+		knockback_velocity = lerp(knockback_velocity, Vector2.ZERO, 0.1)
+	else:
+		knockback_velocity = Vector2.ZERO
+		
 	if player == null:
 		var players = get_tree().get_nodes_in_group("player")
 		if players.size() > 0: player = players[0]
@@ -117,12 +129,12 @@ func _on_AxeAttackArea_body_entered(body):
 			
 func apply_knockback(hit_dir):
 	# Sends player flying: hit_dir (1 or -1) * strength, and a little upwards (-300)
-	knockback = Vector2(hit_dir * 1180, -30)
+	#knockback = Vector2(hit_dir * 1180, -30)
 	# We add (velocity + knockback) so both movement and hit force happen at once
-	velocity = move_and_slide(velocity + knockback, Vector2.UP)
+	#velocity = move_and_slide(velocity + knockback, Vector2.UP)
 
 	# This friction line slowly brings the knockback force back to zero
-	knockback = lerp(knockback, Vector2.ZERO, 0.2)
+	#knockback = lerp(knockback, Vector2.ZERO, 0.2)
 	pass
 
 func take_damage(amount):
@@ -132,12 +144,23 @@ func take_damage(amount):
 	print("Enemy took damage! Amount: ", amount)
 	health -= amount
 	
+	var text_popup = DAMAGE_TEXT.instance()
+	text_popup.text = str(amount)
+	# Spawn it slightly above the goblin's head
+	text_popup.rect_global_position = global_position + Vector2(rand_range(-15, 15), -40)
+	get_tree().current_scene.add_child(text_popup)
+	
 	if health > 0:
 		is_hurt = true
 		is_attacking = false 
 		sprite.play("hurt") 
 		
+		# --- HIT FLASH (Optional Juice) ---
+		sprite.modulate = Color(10, 10, 10) # Brighten the sprite
+		
 		yield(get_tree().create_timer(0.2), "timeout")
+		
+		sprite.modulate = Color(1, 1, 1) # Back to normal
 		is_hurt = false
 	else:
 		die()

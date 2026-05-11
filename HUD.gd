@@ -1,8 +1,8 @@
 extends CanvasLayer
 
 # Adjust paths to match your node names
-onready var health_bar = $"%HealthBar"
-onready var stamina_bar = $"%StaminaBar"
+#onready var health_bar = $"%HealthBar"
+#onready var stamina_bar = $"%StaminaBar"
 
 func _ready():
 	# Set the max values based on player stats
